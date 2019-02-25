@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.271
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eva", "src\eva\eva.csproj", "{EDACAA8B-65BD-485A-8056-6C7DF17013B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "eva.desktop", "src\desktop\eva.desktop.csproj", "{71DB1353-1390-45A7-A403-67161793F4BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EDACAA8B-65BD-485A-8056-6C7DF17013B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDACAA8B-65BD-485A-8056-6C7DF17013B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDACAA8B-65BD-485A-8056-6C7DF17013B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDACAA8B-65BD-485A-8056-6C7DF17013B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71DB1353-1390-45A7-A403-67161793F4BB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71DB1353-1390-45A7-A403-67161793F4BB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71DB1353-1390-45A7-A403-67161793F4BB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71DB1353-1390-45A7-A403-67161793F4BB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC523F75-7962-478B-81F0-BDD1897FF773}
+	EndGlobalSection
+EndGlobal
