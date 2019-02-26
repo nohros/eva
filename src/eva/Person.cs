@@ -25,7 +25,7 @@ namespace Eva
       for (int i = 0; i < speed_; i++) {
         Region region = location_.Region;
         if (know_exits_) {
-          location_ = region.GoToDoor(this, location_);
+          //location_ = region.GetDoors();
         } else {
           MoveRandomly();
         }

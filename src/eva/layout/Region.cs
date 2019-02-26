@@ -16,72 +16,79 @@ namespace Eva.Layout
 
     readonly int top_;
     readonly int left_;
-    readonly int size_;
+    readonly int width_;
+    readonly int height_;
     readonly int rect_size_;
     readonly Dictionary<int, Location> doors_;
     readonly MatrixEntry[][] matrix_;
+    readonly Dictionary<int, Tuple<int, int>> matrix_index_;
 
-    public Region(int top, int left, int size, int rect_size) {
+    public Region(int top, int left, int width, int height, int rect_size) {
       top_ = top;
       left_ = left;
-      size_ = size;
+      width_ = width;
+      height_ = height;
       rect_size_ = rect_size;
-      matrix_ = new MatrixEntry[size][];
+      matrix_ = new MatrixEntry[height_][];
+      matrix_index_ = new Dictionary<int, Tuple<int, int>>();
 
-      for (int i = 0; i < size; i++) {
-        MatrixEntry[] rects = matrix_[i] = new MatrixEntry[size];
-        for (int j = 0; j < size; j++) {
-          int index = j + i + (size_ - 1) * i + 1;
+      int next_top = top, next_left = left;
+      for (int i = 0; i < height_; i++) {
+        MatrixEntry[] rects = matrix_[i] = new MatrixEntry[width_];
+        for (int j = 0; j < width_; j++) {
+          int index = j + i + (width_ - 1) * i + 1;
           Location location = new Location(this, index);
           rects[j] = new MatrixEntry {
-            Rect = new Rect(top, left, rect_size),
+            Rect = new Rect(next_top, next_left, rect_size),
             Occupation = new Occupation(location, null)
           };
-          left = left + rect_size;
+          matrix_index_[index] = new Tuple<int, int>(i, j);
+          next_left = next_left + rect_size;
         }
 
-        top = top + rect_size;
+        next_top = next_top + rect_size;
+        next_left = left;
       }
 
       doors_ = new Dictionary<int, Location>();
     }
 
     public void AddDoor(Location location, int index) {
-      //
+      if (location.Region == this) {
+        throw new ArgumentOutOfRangeException(
+          "Location should point to another region");
+      }
+
+      GetEntryByIndex(index);
+
       doors_[index] = location;
     }
 
-    public Location GoToDoor(Person person, Location location) {
-      throw new NotSupportedException();
+    public IEnumerable<Rect> GetDoors() {
+      foreach (KeyValuePair<int, Location> pair in doors_) {
+        Tuple<int, int> tuple = matrix_index_[pair.Key];
+        yield return matrix_[tuple.Item1][tuple.Item2].Rect;
+      }
     }
 
     public Location PlacePerson(Person person, int index) {
-      for (int i = 0; i < size_; i++) {
-        for (int j = 0; j < size_; j++) {
-          MatrixEntry entry = matrix_[i][j];
-          Location location = entry.Occupation.Location;
-          if (location.Index == index) {
-            entry.Occupation = new Occupation(location, person);
-            return location;
-          }
-        }
-      }
+      MatrixEntry entry = GetEntryByIndex(index);
+      Location location = entry.Occupation.Location;
+      entry.Occupation = new Occupation(location, person);
 
-      throw new ArgumentOutOfRangeException("Invalid location index");
+      return location;
     }
 
     public Surrounding GetSurrounding(int index) {
-      for (int i = 0; i < size_; i++)
-      {
-        for (int j = 0; j < size_; j++)
-        {
-          int idx = j + i + (size_ - 1) * i + 1;
+      for (int i = 0; i < height_; i++) {
+        for (int j = 0; j < width_; j++) {
+          int idx = j + i + (width_ - 1) * i + 1;
           if (idx == index) {
             var occupations = new Occupation[5];
             occupations[0] = matrix_[i][j].Occupation;
             if (j == 0) {
               occupations[2] = matrix_[i][j + 1].Occupation;
-            } else if (j == size_ - 1) {
+            } else if (j == width_ - 1) {
               occupations[1] = matrix_[i][j - 1].Occupation;
             } else {
               occupations[1] = matrix_[i][j - 1].Occupation;
@@ -90,7 +97,7 @@ namespace Eva.Layout
 
             if (i == 0) {
               occupations[4] = matrix_[i + 1][j].Occupation;
-            } else if (i == size_ - 1) {
+            } else if (i == height_ - 1) {
               occupations[3] = matrix_[i - 1][j].Occupation;
             } else {
               occupations[3] = matrix_[i - 1][j].Occupation;
@@ -104,7 +111,18 @@ namespace Eva.Layout
           }
         }
       }
-      throw new ArgumentOutOfRangeException("The index [{0}] does not represents a valid location");
+
+      throw new ArgumentOutOfRangeException(
+        "The index [{0}] does not represents a valid location");
+    }
+
+    MatrixEntry GetEntryByIndex(int index) {
+      if (!matrix_index_.TryGetValue(index, out var loc)) {
+        throw new ArgumentOutOfRangeException("Invalid location index");
+      }
+
+      int i = loc.Item1, j = loc.Item2;
+      return matrix_[i][j];
     }
 
     IEnumerator IEnumerable.GetEnumerator() {
