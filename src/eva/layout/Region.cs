@@ -22,6 +22,7 @@ namespace Eva.Layout
     readonly Dictionary<int, Location> doors_;
     readonly MatrixEntry[][] matrix_;
     readonly Dictionary<int, Tuple<int, int>> matrix_index_;
+    readonly Random rand_;
 
     public Region(int top, int left, int width, int height, int rect_size) {
       top_ = top;
@@ -31,6 +32,7 @@ namespace Eva.Layout
       rect_size_ = rect_size;
       matrix_ = new MatrixEntry[height_][];
       matrix_index_ = new Dictionary<int, Tuple<int, int>>();
+      rand_ = new Random();
 
       int next_top = top, next_left = left;
       for (int i = 0; i < height_; i++) {
@@ -71,7 +73,20 @@ namespace Eva.Layout
       }
     }
 
+    public IEnumerable<Location> GetEmptyLocations() {
+      for (int i = 0; i < height_; i++) {
+        for (int j = 0; j < width_; j++) {
+          MatrixEntry entry = matrix_[i][j];
+          if (entry.Occupation.Person == null) {
+            yield return entry.Occupation.Location;
+          }
+        }
+      }
+    }
+
     public Location PlacePerson(Person person, int index) {
+      RemovePerson(person);
+
       MatrixEntry entry = GetEntryByIndex(index);
       Location location = entry.Occupation.Location;
       entry.Occupation = new Occupation(location, person);
@@ -79,50 +94,76 @@ namespace Eva.Layout
       return location;
     }
 
-    public Surrounding GetSurrounding(int index) {
-      for (int i = 0; i < height_; i++) {
-        for (int j = 0; j < width_; j++) {
-          int idx = j + i + (width_ - 1) * i + 1;
-          if (idx == index) {
-            var occupations = new Occupation[5];
-            occupations[0] = matrix_[i][j].Occupation;
-            if (j == 0) {
-              occupations[2] = matrix_[i][j + 1].Occupation;
-            } else if (j == width_ - 1) {
-              occupations[1] = matrix_[i][j - 1].Occupation;
-            } else {
-              occupations[1] = matrix_[i][j - 1].Occupation;
-              occupations[2] = matrix_[i][j + 1].Occupation;
-            }
+    void RemovePerson(Person person) {
+      Location location = person.Location;
+      MatrixEntry entry = GetEntryByIndex(location.Index);
+      entry.Occupation = new Occupation(location, null);
+    }
 
-            if (i == 0) {
-              occupations[4] = matrix_[i + 1][j].Occupation;
-            } else if (i == height_ - 1) {
-              occupations[3] = matrix_[i - 1][j].Occupation;
-            } else {
-              occupations[3] = matrix_[i - 1][j].Occupation;
-              occupations[4] = matrix_[i + 1][j].Occupation;
-            }
-
-            return new Surrounding(
-              occupations[0], occupations[1],
-              occupations[2], occupations[3],
-              occupations[4]);
-          }
+    /*public bool PlacePerson(Person person, out Location location) {
+      int[] indexes = matrix_index_.Keys.ToArray();
+      for (int i = 0; i < 10; i++) {
+        int key = rand_.Next(0, indexes.Length - 1);
+        int index = indexes[key];
+        MatrixEntry entry = GetEntryByIndex(index);
+        Occupation occupation = entry.Occupation;
+        location = occupation.Location;
+        if (occupation.Person == null) {
+          entry.Occupation = new Occupation(location, person);
+          return true;
         }
       }
+      
+      location = null;
+      return false;
+    }*/
 
-      throw new ArgumentOutOfRangeException(
-        "The index [{0}] does not represents a valid location");
+    public Surrounding GetSurrounding(int index) {
+      Tuple<int, int> tuple = GetMatrixTuple(index);
+      int i = tuple.Item1, j = tuple.Item2;
+      var occupations = new Occupation[5];
+      occupations[0] = matrix_[i][j].Occupation;
+      if (j == 0) {
+        occupations[2] = matrix_[i][j + 1].Occupation;
+      } else if (j == width_ - 1) {
+        occupations[1] = matrix_[i][j - 1].Occupation;
+      } else {
+        occupations[1] = matrix_[i][j - 1].Occupation;
+        occupations[2] = matrix_[i][j + 1].Occupation;
+      }
+
+      if (i == 0) {
+        occupations[4] = matrix_[i + 1][j].Occupation;
+      } else if (i == height_ - 1) {
+        occupations[3] = matrix_[i - 1][j].Occupation;
+      } else {
+        occupations[3] = matrix_[i - 1][j].Occupation;
+        occupations[4] = matrix_[i + 1][j].Occupation;
+      }
+
+      return new Surrounding(
+        occupations[0], occupations[1],
+        occupations[2], occupations[3],
+        occupations[4]);
+    }
+
+    public Rect GetRectByIndex(int index) {
+      return GetEntryByIndex(index).Rect;
     }
 
     MatrixEntry GetEntryByIndex(int index) {
+      Tuple<int, int> loc = GetMatrixTuple(index);
+
+      int i = loc.Item1, j = loc.Item2;
+      return matrix_[i][j];
+    }
+
+    Tuple<int,int> GetMatrixTuple(int index) {
       if (!matrix_index_.TryGetValue(index, out var loc)) {
         throw new ArgumentOutOfRangeException("Invalid location index");
       }
 
-      int i = loc.Item1, j = loc.Item2;
-      return matrix_[i][j];
+      return loc;
     }
 
     IEnumerator IEnumerable.GetEnumerator() {

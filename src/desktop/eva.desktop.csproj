@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Position.cs" />
     <Compile Include="Simulador.cs">
       <SubType>Form</SubType>
     </Compile>

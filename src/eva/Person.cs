@@ -21,7 +21,7 @@ namespace Eva
       rand_ = new Random();
     }
 
-    public void Move() {
+    public Location Move() {
       for (int i = 0; i < speed_; i++) {
         Region region = location_.Region;
         if (know_exits_) {
@@ -30,9 +30,11 @@ namespace Eva
           MoveRandomly();
         }
       }
+
+      return location_;
     }
 
-    public void MoveRandomly() {
+    void MoveRandomly() {
       Region region = location_.Region;
       Surrounding surrounding = region.GetSurrounding(location_.Index);
       // Since we do not know the door direction, we should move randonmly to
@@ -47,12 +49,14 @@ namespace Eva
 
       int size = empty_occupations.Count;
       if (size > 1) {
-        int index = rand_.Next(0, size - 1);
+        int index = rand_.Next(0, size);
         Occupation occupation = empty_occupations[index];
         location_ = region.PlacePerson(this, occupation.Location.Index);
       }
     }
 
     public bool KnowExit => know_exits_;
+
+    public Location Location => location_;
   }
 }
