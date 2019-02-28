@@ -28,6 +28,23 @@ namespace Eva.Layout
       Center = new Point(left + middle, top + middle);
     }
 
+    public bool IsOnRow(Rect rect) {
+      return Top == rect.Top;
+    }
+
+    public bool IsOnColumn(Rect rect) {
+      return Left == rect.Left;
+    }
+
+
+    public bool IsBelow(Rect rect) {
+      return Center.Y > rect.Center.Y;
+    }
+
+    public bool IsOnLeft(Rect rect) {
+      return Center.X < rect.Center.X;
+    }
+
     public int Top { get; }
     public int Bottom { get; }
     public int Left { get; }

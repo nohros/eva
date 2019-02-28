@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using Eva;
 using Eva.Layout;
 
 namespace desktop
@@ -9,56 +10,70 @@ namespace desktop
   {
     const int kRectSize = 10;
     readonly Dictionary<int, Region> regions_;
+    readonly Dictionary<Position, Panel> positions_;
 
     public Form1() {
       InitializeComponent();
 
       regions_ = new Dictionary<int, Region>();
+      positions_ = new Dictionary<Position, Panel>();
 
       CreateMap();
     }
 
     void CreateMap() {
-      CreateRegion(0, 33, 18, 18, "R::1");
-      CreateRegion(0, 52, 9, 18, "R::2");
-      CreateRegion(0, 62, 21, 18, "R::3");
-      CreateRegion(19, 33, 10, 18, "R::4");
-      CreateRegion(19, 44, 7, 4, "R::5");
-      CreateRegion(24, 44, 7, 13, "R::6");
-      CreateRegion(19, 52, 5, 27, "R::7");
-      CreateRegion(19, 58, 7, 4, "R::8");
-      CreateRegion(19, 66, 3, 8, "R::9");
-      CreateRegion(19, 70, 13, 18, "R::10");
-      CreateRegion(24, 58, 7, 3, "R::11");
-      CreateRegion(28, 58, 11, 9, "R::12");
-      CreateRegion(13, 91, 27, 24, "R::13");
-      //CreateRegion(,,,, "R::14");
-      CreateRegion(38, 58, 5, 8, "R::15");
-      CreateRegion(38, 64, 5, 8, "R::16");
-      CreateRegion(38, 70, 20, 8, "R::17");
-      CreateRegion(38, 91, 3, 8, "R::18");
-      CreateRegion(47, 0, 20, 27, "R::19");
-      CreateRegion(47, 21, 89, 6, "R::20");
-      CreateRegion(54, 21, 21, 20, "R::21");
-      CreateRegion(54, 43, 21, 20, "R::22");
-      CreateRegion(54, 65, 21, 20, "R::23");
-      CreateRegion(54, 86, 21, 20, "R::24");
+      CreateRegion(0, 23, 18, 18, 1);
+      CreateRegion(0, 42, 9, 18, 2);
+      CreateRegion(0, 52, 21, 18, 3);
+      CreateRegion(19, 23, 10, 18, 4);
+      CreateRegion(19, 34, 7, 4, 5);
+      CreateRegion(24, 34, 7, 13, 6);
+      CreateRegion(19, 42, 5, 23, 7);
+      CreateRegion(19, 48, 7, 4, 8);
+      CreateRegion(19, 56, 3, 8, 9);
+      CreateRegion(19, 60, 13, 14, 10);
+      CreateRegion(24, 48, 7, 3, 11);
+      CreateRegion(28, 48, 11, 5, 12);
+      CreateRegion(16, 78, 19, 17, 13);
+      CreateRegion(34, 48, 5, 8, 14);
+      CreateRegion(34, 54, 5, 8, 15);
+      CreateRegion(34, 60, 17, 8, 16);
+      CreateRegion(34, 78, 3, 8, 17);
+      CreateRegion(43, 0, 10, 27, 18);
+      CreateRegion(43, 11, 86, 6, 19);
+      CreateRegion(50, 11, 21, 20, 20);
+      CreateRegion(50, 33, 21, 20, 21);
+      CreateRegion(50, 55, 21, 20, 22);
+      CreateRegion(50, 77, 20, 20, 23);
+      CreateRegion(43, 98, 15, 27, 24);
+      CreateRegion(38, 0, 41, 4, 25);
+      CreateRegion(34, 82, 31, 8, 26);
     }
 
     Region CreateRegion(int top,
       int left,
       int width,
       int height,
-      string name = "") {
+      int index) {
       Region region =
         new Region(top * kRectSize, left * kRectSize, width,
           height, kRectSize);
+      int i = 1;
       foreach (Rect rect in region) {
-        Panel panel = CreatePanel(rect.Left, rect.Top, name);
+        string new_name = "T:" + rect.Top + "::L:" + rect.Left + "::" + i++ + "::R" + index;
+        Panel panel = CreatePanel(rect.Left, rect.Top, new_name);
+        var position = new Position(rect.Top, rect.Left);
+        positions_[position] = panel;
+        panel.MouseHover += OnMouseHover;
         planta.Controls.Add(panel);
       }
 
       return region;
+    }
+
+    void OnMouseHover(object sender ,EventArgs e) {
+      Panel panel = (Panel) sender;
+      txtRegion.Text = panel.Name;
     }
 
     Panel CreatePanel(int left, int top, string name) {
@@ -80,6 +95,7 @@ namespace desktop
       this.txtLeft = new System.Windows.Forms.TextBox();
       this.txtHeight = new System.Windows.Forms.TextBox();
       this.txtTop = new System.Windows.Forms.TextBox();
+      this.txtRegion = new System.Windows.Forms.TextBox();
       ((System.ComponentModel.ISupportInitialize)(this.planta)).BeginInit();
       this.SuspendLayout();
       // 
@@ -141,11 +157,19 @@ namespace desktop
       this.txtTop.TabIndex = 2;
       this.txtTop.GotFocus += new System.EventHandler(this.GotFocus);
       // 
+      // txtRegion
+      // 
+      this.txtRegion.Location = new System.Drawing.Point(13, 137);
+      this.txtRegion.Name = "txtRegion";
+      this.txtRegion.Size = new System.Drawing.Size(205, 20);
+      this.txtRegion.TabIndex = 7;
+      // 
       // Form1
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
       this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
       this.ClientSize = new System.Drawing.Size(1184, 762);
+      this.Controls.Add(this.txtRegion);
       this.Controls.Add(this.txtTop);
       this.Controls.Add(this.txtHeight);
       this.Controls.Add(this.txtLeft);
@@ -162,7 +186,7 @@ namespace desktop
     }
 
     private void button1_Click(object sender, EventArgs e) {
-      string key = "R::" + txtId.Text;
+      string key = "R" + txtId.Text;
 
       button1.BackColor = System.Drawing.Color.Black;
 
@@ -175,7 +199,7 @@ namespace desktop
       var removable = new List<Control>();
       for (int i = 0; i < controls.Count; i++) {
         Control control = controls[i];
-        if (control.Name == key) {
+        if (control.Name.Contains(key)) {
           removable.Add(control);
         }
       }
@@ -186,7 +210,7 @@ namespace desktop
 
       planta.Refresh();
 
-      CreateRegion(top, left, width, height, key);
+      CreateRegion(top, left, width, height, int.Parse(txtId.Text));
 
       button1.BackColor = System.Drawing.Color.Green;
     }

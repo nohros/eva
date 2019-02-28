@@ -14,6 +14,7 @@
     private System.Windows.Forms.TextBox txtLeft;
     private System.Windows.Forms.TextBox txtHeight;
     private System.Windows.Forms.TextBox txtTop;
+    private System.Windows.Forms.TextBox txtRegion;
   }
 }
 

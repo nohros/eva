@@ -11,7 +11,15 @@ namespace desktop
 {
   public partial class Simulador : Form
   {
+    struct RegionPath
+    {
+      public Region Region { get; set; }
+      public int[] Indexes { get; set; }
+    }
+
+    const int kPersonsCount = 266;
     const int kRectSize = 10;
+
     readonly Region[] regions_;
     readonly Person[] persons_;
     readonly Dictionary<Position, Panel> positions_;
@@ -23,23 +31,32 @@ namespace desktop
       rand_ = new Random();
       positions_ = new Dictionary<Position, Panel>();
       regions_ = CreateMap();
-      persons_ = CreatePersons(30);
+      persons_ = CreatePersons(kPersonsCount);
     }
 
     Person[] CreatePersons(int count) {
       var persons = new List<Person>();
       for (int i = 0; i < count; i++) {
-        Person person = CreatePerson();
+        int speed = rand_.Next(1, 3);
+        int know_exists = rand_.Next(0, 2);
+        Person person = CreatePerson(speed, know_exists == 1);
         persons.Add(person);
       }
 
       return persons.ToArray();
     }
 
-    Person CreatePerson() {
+    Person CreatePerson(int speed, bool know_exists) {
       Person person = null;
       while (person == null) {
         int index = rand_.Next(0, regions_.Length);
+
+        // Do not place persons on dummy areas
+        if (index > 23) {
+          continue;
+        }
+
+        //int index = rand_.Next(0, 1);
         Region region = regions_[index];
         Location[] locations =
           region
@@ -49,7 +66,7 @@ namespace desktop
         if (locations.Length > 0) {
           index = rand_.Next(0, locations.Length - 1);
           Location location = locations[index];
-          person = new Person(1, location, false);
+          person = new Person(speed, location, know_exists);
           region.PlacePerson(person, location.Index);
 
           Rect rect = region.GetRectByIndex(location.Index);
@@ -64,36 +81,38 @@ namespace desktop
 
     Region[] CreateMap() {
       Region[] regions = {
-        CreateRegion(0, 33, 18, 18, "R::1"),
-        CreateRegion(0, 52, 9, 18, "R::2"),
-        CreateRegion(0, 62, 21, 18, "R::3"),
-        CreateRegion(19, 33, 10, 18, "R::4"),
-        CreateRegion(19, 44, 7, 4, "R::5"),
-        CreateRegion(24, 44, 7, 13, "R::6"),
-        CreateRegion(19, 52, 5, 27, "R::7"),
-        CreateRegion(19, 58, 7, 4, "R::8"),
-        CreateRegion(19, 66, 3, 8, "R::9"),
-        CreateRegion(19, 70, 13, 18, "R::10"),
-        CreateRegion(24, 58, 7, 3, "R::11"),
-        CreateRegion(28, 58, 11, 9, "R::12"),
-        CreateRegion(13, 91, 27, 24, "R::13"),
-        //CreateRegion(,,,, "R::14");
-        CreateRegion(38, 58, 5, 8, "R::15"),
-        CreateRegion(38, 64, 5, 8, "R::16"),
-        CreateRegion(38, 70, 20, 8, "R::17"),
-        CreateRegion(38, 91, 3, 8, "R::18"),
-        CreateRegion(47, 0, 20, 27, "R::19"),
-        CreateRegion(47, 21, 89, 6, "R::20"),
-        CreateRegion(54, 21, 21, 20, "R::21"),
-        CreateRegion(54, 43, 21, 20, "R::22"),
-        CreateRegion(54, 65, 21, 20, "R::23"),
-        CreateRegion(54, 86, 21, 20, "R::24")
-      };
+        CreateRegion(0, 23, 18, 18, 1),
+        CreateRegion(0, 42, 9, 18, 2),
+        CreateRegion(0, 52, 21, 18, 3),
+        CreateRegion(19, 23, 10, 18, 4),
+        CreateRegion(19, 34, 7, 4, 5),
+        CreateRegion(24, 34, 7, 13, 6),
+        CreateRegion(19, 42, 5, 23, 7),
+        CreateRegion(19, 48, 7, 4, 8),
+        CreateRegion(19, 56, 3, 8, 9),
+        CreateRegion(19, 60, 13, 14, 10),
+        CreateRegion(24, 48, 7, 3, 11),
+        CreateRegion(28, 48, 11, 5, 12),
+        CreateRegion(16, 78, 19, 17, 13),
+        CreateRegion(34, 48, 5, 8, 14),
+        CreateRegion(34, 54, 5, 8, 15),
+        CreateRegion(34, 60, 17, 8, 16),
+        CreateRegion(34, 78, 3, 8, 17),
+        CreateRegion(43, 0, 10, 27, 18),
+        CreateRegion(43, 11, 86, 6, 19),
+        CreateRegion(50, 11, 21, 20, 20),
+        CreateRegion(50, 33, 21, 20, 21),
+        CreateRegion(50, 55, 21, 20, 22),
+        CreateRegion(50, 77, 20, 20, 23),
+        CreateRegion(43, 98, 15, 27, 24),
+        CreateRegion(38,0,41,4,25),
+        CreateRegion(34, 82, 31, 8, 26)
+    };
 
       // Add doors
-      regions[0].AddDoor(new Location(regions[7], 1), 322);
-      regions[0].AddDoor(new Location(regions[7], 2), 323);
-      regions[0].AddDoor(new Location(regions[7], 3), 324);
+      AddDoors(regions);
+
+      //regions[1].AddDoor(new Location(regions[7], 3), 156);
 
       foreach (Region region in regions) {
         IEnumerable<Rect> doors = region.GetDoors();
@@ -109,17 +128,54 @@ namespace desktop
       return regions;
     }
 
+    void AddDoors(Region[] regions) {
+      // @formatter:off
+      AddDoors(new RegionPath { Region = regions[0], Indexes = new[] { 322, 323, 324 } }, new RegionPath { Region = regions[4], Indexes = new[] { 5, 6, 7 } });
+      AddDoors(new RegionPath { Region = regions[1], Indexes = new[] { 154, 155, 156 } }, new RegionPath { Region = regions[6], Indexes = new[] { 1, 2, 3 } });
+      AddDoors(new RegionPath { Region = regions[2], Indexes = new[] { 358, 359, 360 } }, new RegionPath { Region = regions[7], Indexes = new[] { 5, 6, 7 } });
+      AddDoors(new RegionPath { Region = regions[3], Indexes = new[] { 10, 20, 30 } }, new RegionPath { Region = regions[4], Indexes = new[] { 1, 8, 15 } });
+      AddDoors(new RegionPath { Region = regions[4], Indexes = new[] { 7, 14, 21 } }, new RegionPath { Region = regions[6], Indexes = new[] { 1, 6, 11 } });
+      AddDoors(new RegionPath { Region = regions[5], Indexes = new[] { 77, 84, 91 } }, new RegionPath { Region = regions[6], Indexes = new[] { 76, 81, 86 } });
+      AddDoors(new RegionPath { Region = regions[6], Indexes = new[] { 96, 101, 106 } }, new RegionPath { Region = regions[24], Indexes = new[] { 41, 82, 123 } });
+      AddDoors(new RegionPath { Region = regions[7], Indexes = new[] { 1, 8, 15 } }, new RegionPath { Region = regions[6], Indexes = new[] { 5, 10, 15 } });
+      AddDoors(new RegionPath { Region = regions[8], Indexes = new[] { 1, 4, 7 } }, new RegionPath { Region = regions[7], Indexes = new[] { 7, 14, 21 } });
+      AddDoors(new RegionPath { Region = regions[9], Indexes = new[] { 1, 14, 27, 40, 53, 66, 79, 92 } }, new RegionPath { Region = regions[8], Indexes = new[] { 3, 6, 9, 12, 15, 18, 21, 24 } });
+      AddDoors(new RegionPath { Region = regions[10], Indexes = new[] { 2, 3, 4 } }, new RegionPath { Region = regions[7], Indexes = new[] { 23, 24, 25 } });
+      AddDoors(new RegionPath { Region = regions[11], Indexes = new[] { 12, 23, 34 } }, new RegionPath { Region = regions[6], Indexes = new[] { 55, 60, 65 } });
+      AddDoors(new RegionPath { Region = regions[12], Indexes = new[] { 305, 306, 307 } }, new RegionPath { Region = regions[16], Indexes = new[] { 1, 2, 3 } });
+      AddDoors(new RegionPath { Region = regions[13], Indexes = new[] { 1, 6, 11 } }, new RegionPath { Region = regions[6], Indexes = new[] { 80, 85, 90 } });
+      AddDoors(new RegionPath { Region = regions[14], Indexes = new[] { 1, 6, 11 } }, new RegionPath { Region = regions[13], Indexes = new[] { 5, 10, 15 } });
+      AddDoors(new RegionPath { Region = regions[15], Indexes = new[] { 130, 131, 132 } }, new RegionPath { Region = regions[18], Indexes = new[] { 60, 61, 62 } });
+      AddDoors(new RegionPath { Region = regions[16], Indexes = new[] { 22, 23, 24 } }, new RegionPath { Region = regions[18], Indexes = new[] { 68, 69, 70 } });
+      AddDoors(new RegionPath { Region = regions[17], Indexes = new[] { 10, 20, 30 } }, new RegionPath { Region = regions[18], Indexes = new[] { 1, 87, 173 } });
+      AddDoors(new RegionPath { Region = regions[18], Indexes = new[] { 72, 73, 74 } }, new RegionPath { Region = regions[25], Indexes = new[] { 218, 219, 220 } });
+      AddDoors(new RegionPath { Region = regions[19], Indexes = new[] { 1, 2, 3 } }, new RegionPath { Region = regions[18], Indexes = new[] { 431, 432, 433 } });
+      AddDoors(new RegionPath { Region = regions[20], Indexes = new[] { 1, 2, 3 } }, new RegionPath { Region = regions[18], Indexes = new[] { 453, 454, 455 } });
+      AddDoors(new RegionPath { Region = regions[21], Indexes = new[] { 1, 2, 3 } }, new RegionPath { Region = regions[18], Indexes = new[] { 475, 476, 477 } });
+      AddDoors(new RegionPath { Region = regions[22], Indexes = new[] { 1, 2, 3 } }, new RegionPath { Region = regions[18], Indexes = new[] { 497, 498, 499 } });
+      AddDoors(new RegionPath { Region = regions[23], Indexes = new[] { 16, 31, 46 } }, new RegionPath { Region = regions[18], Indexes = new[] { 172, 258, 344 } });
+      // @formatter:on
+    }
+
+    void AddDoors(RegionPath source, RegionPath destination) {
+      for (int i = 0; i < source.Indexes.Length; i++) {
+        Location location =
+          new Location(destination.Region, destination.Indexes[i]);
+        source.Region.AddDoor(location, source.Indexes[i]);
+      }
+    }
+
     Region CreateRegion(int top,
       int left,
       int width,
       int height,
-      string name = "") {
+      int index = 0) {
       Region region =
         new Region(top * kRectSize, left * kRectSize, width,
           height, kRectSize);
       int i = 0;
       foreach (Rect rect in region) {
-        Panel panel = CreatePanel(rect.Left, rect.Top, name);
+        Panel panel = CreatePanel(rect.Left, rect.Top, index.ToString());
         var position = new Position(rect.Top, rect.Left);
         positions_[position] = panel;
         planta.Controls.Add(panel);
@@ -155,7 +211,7 @@ namespace desktop
       ChangePanelColor(position, Color.Gainsboro);
 
       Location location = person.Move();
-      position = Position.FromLocation(person.Location);
+      position = Position.FromLocation(location);
 
       ChangePanelColor(position, Color.Red);
     }

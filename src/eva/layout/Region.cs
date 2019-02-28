@@ -87,6 +87,12 @@ namespace Eva.Layout
     public Location PlacePerson(Person person, int index) {
       RemovePerson(person);
 
+      // If the person moves to a door location, it should be transported
+      // to the region that is close to it.
+      if (doors_.TryGetValue(index, out var door)) {
+        return door;
+      }
+
       MatrixEntry entry = GetEntryByIndex(index);
       Location location = entry.Occupation.Location;
       entry.Occupation = new Occupation(location, person);
